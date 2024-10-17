@@ -32,6 +32,17 @@ jobs:
         import json
         from datetime import datetime
 
+        def get_low_scorers(weekly_results):
+            low_scorers = []
+            for team in weekly_results:
+                team_name = team.get('team_name', 'Unknown Team')
+                starters = team.get('starters', [])
+                starter_points = team.get('starters_points', [])
+                low_scoring = [(s, p) for s, p in zip(starters, starter_points) if p <= 0]
+                if low_scoring:
+                    low_scorers.append({'team_name': team_name, 'low_scoring': low_scoring})
+            return low_scorers
+
         # Read the JSON file
         filename = f'weekly_results_{datetime.now().strftime(\"%Y%m%d\")}.json'
         print(f'Attempting to read file: {filename}')
@@ -40,29 +51,22 @@ jobs:
 
         # Create a readable report
         report = 'Weekly Ice Report\n\n'
-        for week in data:
-            report += f'Week {week[\"week\"]}:\n'
-            report += f'  Lowest scoring team: {week[\"team\"]} with {week[\"score\"]} points\n'
+        for week_data in data:
+            week = week_data['week']
+            report += f'Week {week}:\n'
+            report += f'  Lowest scoring team: {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
             report += '  Zeros or less from your starters:\n'
             
-            low_scorers = week.get('low_scorers', [])
-            print(f'Low scorers for week {week[\"week\"]}: {low_scorers}')
+            weekly_results = get_weekly_results(week, league_id)  # You need to implement this function
+            low_scorers = get_low_scorers(weekly_results)
             
-            if isinstance(low_scorers, list) and low_scorers:
-                for player in low_scorers:
-                    if isinstance(player, dict):
-                        team_name = player.get('team_name', 'Unknown Team')
-                        starters = player.get('low_scoring_starters', [])
-                        points = player.get('low_scoring_points', [])
-                        report += f'    - {team_name}:\n'
-                        for starter, point in zip(starters, points):
-                            report += f'      * {starter}: {point} points\n'
-                    else:
-                        report += f'    - {player}\n'
-            elif isinstance(low_scorers, str):
-                report += f'    {low_scorers}\n'
+            if low_scorers:
+                for team in low_scorers:
+                    report += f'    - {team[\"team_name\"]}:\n'
+                    for starter, points in team['low_scoring']:
+                        report += f'      * {starter}: {points} points\n'
             else:
-                report += '    No low scoring starters this week.\n'
+                report += '    No starters with zero or negative points this week.\n'
             report += '\n'
 
         # Write the report to a file
