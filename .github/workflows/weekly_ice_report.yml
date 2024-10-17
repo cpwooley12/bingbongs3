@@ -2,9 +2,8 @@ name: Weekly Ice Report
 
 on:
   schedule:
-    # This will run the job every Monday at 23:00 UTC (11:00 PM UTC)
-    - cron: '0 23 * * 1'
-  workflow_dispatch:  # This allows manual triggering of the workflow
+    - cron: '0 23 * * 1'  # Every Monday at 11:00 PM UTC
+  workflow_dispatch:
 
 jobs:
   run_ice_report:
@@ -12,12 +11,12 @@ jobs:
     
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.11'  # Specify the Python version you need
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
@@ -61,13 +60,11 @@ jobs:
         password: ${{secrets.EMAIL_PASS}}
         subject: Weekly Ice Report
         body: file://weekly_report.txt
-        to: connor.wooley12@gmail.com
+        to: your-email@example.com
         from: GitHub Actions
 
     - name: Upload report as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: weekly-report
         path: weekly_report.txt
-
-    # Optional: Add steps to handle the output, such as creating a commit, opening a PR, or sending an email
