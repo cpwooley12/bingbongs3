@@ -33,17 +33,17 @@ jobs:
         from datetime import datetime
 
         # Read the JSON file
-        with open('weekly_results_$(date +%Y%m%d).json', 'r') as f:
+        with open(f'weekly_results_{datetime.now().strftime(\"%Y%m%d\")}.json', 'r') as f:
             data = json.load(f)
 
         # Create a readable report
         report = 'Weekly Ice Report\n\n'
         for week in data:
-            report += f'Week {week['week']}:\n'
-            report += f'  Lowest scoring team: {week['team']} with {week['score']} points\n'
+            report += f'Week {week[\"week\"]}:\n'
+            report += f'  Lowest scoring team: {week[\"team\"]} with {week[\"score\"]} points\n'
             report += '  Low scoring starters:\n'
             for player in week['low_scorers']:
-                report += f'    - {player['team_name']}: {', '.join(player['low_scoring_starters'])}\n'
+                report += f'    - {player[\"team_name\"]}: {\", \".join(player[\"low_scoring_starters\"])}\n'
             report += '\n'
 
         # Write the report to a file
