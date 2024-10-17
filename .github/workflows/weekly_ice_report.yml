@@ -42,7 +42,7 @@ jobs:
                 rosters_response = requests.get(rosters_url)
                 if rosters_response.status_code == 200:
                     rosters = rosters_response.json()
-                    return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f'Team {roster[\"roster_id\"]}') for roster in rosters}
+                    return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f\"Team {roster['roster_id']}\") for roster in rosters}
             return {}
 
         def get_weekly_results(week, league_id, team_names):
@@ -51,7 +51,7 @@ jobs:
             if response.status_code == 200:
                 matchups = response.json()
                 for matchup in matchups:
-                    matchup['team_name'] = team_names.get(matchup['roster_id'], f'Team {matchup['roster_id']}')
+                    matchup['team_name'] = team_names.get(matchup['roster_id'], f\"Team {matchup['roster_id']}\")
                 return matchups
             else:
                 print(f'Failed to fetch matchup data for week {week}. Status: {response.status_code}')
@@ -60,7 +60,7 @@ jobs:
         def get_low_scorers(weekly_results):
             low_scorers = []
             for team in weekly_results:
-                team_name = team.get('team_name', f'Team {team.get(\"roster_id\", \"Unknown\")}')
+                team_name = team.get('team_name', f\"Team {team.get('roster_id', 'Unknown')}\")
                 starters = team.get('starters', [])
                 starter_points = team.get('starters_points', [])
                 low_scoring = [(s, p) for s, p in zip(starters, starter_points) if p <= 0]
