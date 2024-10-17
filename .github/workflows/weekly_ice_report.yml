@@ -41,14 +41,23 @@ jobs:
         for week in data:
             report += f'Week {week[\"week\"]}:\n'
             report += f'  Lowest scoring team: {week[\"team\"]} with {week[\"score\"]} points\n'
-            report += '  Low scoring starters:\n'
-            for player in week['low_scorers']:
-                report += f'    - {player[\"team_name\"]}: {\", \".join(player[\"low_scoring_starters\"])}\n'
+            report += '  Zeros or less from your starters:\n'
+            if isinstance(week['low_scorers'], list):
+                for player in week['low_scorers']:
+                    if isinstance(player, dict) and 'team_name' in player and 'low_scoring_starters' in player:
+                        report += f'    - {player[\"team_name\"]}:\n'
+                        for starter, points in zip(player['low_scoring_starters'], player.get('low_scoring_points', [])):
+                            report += f'      * {starter}: {points} points\n'
+                    else:
+                        report += f'    - {player}\n'
+            else:
+                report += f'    {week[\"low_scorers\"]}\n'
             report += '\n'
 
         # Write the report to a file
         with open('weekly_report.txt', 'w') as f:
             f.write(report)
+        print('Report generated successfully')
         "
 
     - name: Send email
