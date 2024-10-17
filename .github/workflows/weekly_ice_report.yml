@@ -60,7 +60,7 @@ jobs:
         password: ${{secrets.EMAIL_PASS}}
         subject: Weekly Ice Report
         body: file://weekly_report.txt
-        to: your-email@example.com
+        to: connor.wooley12@gmail.com
         from: GitHub Actions
 
     - name: Upload report as artifact
