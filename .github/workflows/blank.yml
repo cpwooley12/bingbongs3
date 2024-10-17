@@ -17,14 +17,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'  # Specify the Python version you need
+        python-version: '3.11'  # Specify the Python version you need
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt  # If you have a requirements file
-        # If you don't have a requirements file, list your dependencies here:
-        # pip install package1 package2 package3
+        pip install -r requirements.txt
 
     - name: Run weekly ice report
       run: python weekly_ice_report.py
