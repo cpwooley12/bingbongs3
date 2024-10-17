@@ -33,11 +33,26 @@ jobs:
         from datetime import datetime
         import requests
 
-        def get_weekly_results(week, league_id):
+        def get_team_names(league_id):
+            url = f'https://api.sleeper.app/v1/league/{league_id}/users'
+            response = requests.get(url)
+            if response.status_code == 200:
+                users = response.json()
+                rosters_url = f'https://api.sleeper.app/v1/league/{league_id}/rosters'
+                rosters_response = requests.get(rosters_url)
+                if rosters_response.status_code == 200:
+                    rosters = rosters_response.json()
+                    return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f'Team {roster['roster_id']}') for roster in rosters}
+            return {}
+
+        def get_weekly_results(week, league_id, team_names):
             url = f'https://api.sleeper.app/v1/league/{league_id}/matchups/{week}'
             response = requests.get(url)
             if response.status_code == 200:
-                return response.json()
+                matchups = response.json()
+                for matchup in matchups:
+                    matchup['team_name'] = team_names.get(matchup['roster_id'], f'Team {matchup['roster_id']}')
+                return matchups
             else:
                 print(f'Failed to fetch matchup data for week {week}. Status: {response.status_code}')
                 return []
@@ -62,6 +77,9 @@ jobs:
         # Define league_id (replace with your actual league ID)
         league_id = '1117180538298658816'
 
+        # Get team names
+        team_names = get_team_names(league_id)
+
         # Create a readable report
         report = 'Weekly Ice Report\n\n'
         for week_data in data:
@@ -70,7 +88,7 @@ jobs:
             report += f'  Lowest scoring team: {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
             report += '  Zeros or less from your starters:\n'
             
-            weekly_results = get_weekly_results(week, league_id)
+            weekly_results = get_weekly_results(week, league_id, team_names)
             low_scorers = get_low_scorers(weekly_results)
             
             if low_scorers:
