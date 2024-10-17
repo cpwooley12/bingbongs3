@@ -42,7 +42,7 @@ jobs:
                 rosters_response = requests.get(rosters_url)
                 if rosters_response.status_code == 200:
                     rosters = rosters_response.json()
-                    return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f'Team {roster['roster_id']}') for roster in rosters}
+                    return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f'Team {roster[\"roster_id\"]}') for roster in rosters}
             return {}
 
         def get_weekly_results(week, league_id, team_names):
