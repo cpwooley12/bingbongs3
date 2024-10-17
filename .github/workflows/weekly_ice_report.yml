@@ -33,7 +33,9 @@ jobs:
         from datetime import datetime
 
         # Read the JSON file
-        with open(f'weekly_results_{datetime.now().strftime(\"%Y%m%d\")}.json', 'r') as f:
+        filename = f'weekly_results_{datetime.now().strftime(\"%Y%m%d\")}.json'
+        print(f'Attempting to read file: {filename}')
+        with open(filename, 'r') as f:
             data = json.load(f)
 
         # Create a readable report
@@ -42,21 +44,32 @@ jobs:
             report += f'Week {week[\"week\"]}:\n'
             report += f'  Lowest scoring team: {week[\"team\"]} with {week[\"score\"]} points\n'
             report += '  Zeros or less from your starters:\n'
-            if isinstance(week['low_scorers'], list):
-                for player in week['low_scorers']:
-                    if isinstance(player, dict) and 'team_name' in player and 'low_scoring_starters' in player:
-                        report += f'    - {player[\"team_name\"]}:\n'
-                        for starter, points in zip(player['low_scoring_starters'], player.get('low_scoring_points', [])):
-                            report += f'      * {starter}: {points} points\n'
+            
+            low_scorers = week.get('low_scorers', [])
+            print(f'Low scorers for week {week[\"week\"]}: {low_scorers}')
+            
+            if isinstance(low_scorers, list) and low_scorers:
+                for player in low_scorers:
+                    if isinstance(player, dict):
+                        team_name = player.get('team_name', 'Unknown Team')
+                        starters = player.get('low_scoring_starters', [])
+                        points = player.get('low_scoring_points', [])
+                        report += f'    - {team_name}:\n'
+                        for starter, point in zip(starters, points):
+                            report += f'      * {starter}: {point} points\n'
                     else:
                         report += f'    - {player}\n'
+            elif isinstance(low_scorers, str):
+                report += f'    {low_scorers}\n'
             else:
-                report += f'    {week[\"low_scorers\"]}\n'
+                report += '    No low scoring starters this week.\n'
             report += '\n'
 
         # Write the report to a file
         with open('weekly_report.txt', 'w') as f:
             f.write(report)
+        print('Report content:')
+        print(report)
         print('Report generated successfully')
         "
 
