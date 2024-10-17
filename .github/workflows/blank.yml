@@ -27,4 +27,47 @@ jobs:
     - name: Run weekly ice report
       run: python weekly_ice_report.py
 
+    - name: Process JSON and create report
+      run: |
+        python -c "
+        import json
+        from datetime import datetime
+
+        # Read the JSON file
+        with open('weekly_results_$(date +%Y%m%d).json', 'r') as f:
+            data = json.load(f)
+
+        # Create a readable report
+        report = 'Weekly Ice Report\n\n'
+        for week in data:
+            report += f'Week {week['week']}:\n'
+            report += f'  Lowest scoring team: {week['team']} with {week['score']} points\n'
+            report += '  Low scoring starters:\n'
+            for player in week['low_scorers']:
+                report += f'    - {player['team_name']}: {', '.join(player['low_scoring_starters'])}\n'
+            report += '\n'
+
+        # Write the report to a file
+        with open('weekly_report.txt', 'w') as f:
+            f.write(report)
+        "
+
+    - name: Send email
+      uses: dawidd6/action-send-mail@v2
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{secrets.EMAIL_USER}}
+        password: ${{secrets.EMAIL_PASS}}
+        subject: Weekly Ice Report
+        body: file://weekly_report.txt
+        to: connor.wooley12@gmail.com
+        from: GitHub Actions
+
+    - name: Upload report as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: weekly-report
+        path: weekly_report.txt
+
     # Optional: Add steps to handle the output, such as creating a commit, opening a PR, or sending an email
