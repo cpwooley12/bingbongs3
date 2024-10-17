@@ -31,11 +31,21 @@ jobs:
         python -c "
         import json
         from datetime import datetime
+        import requests
+
+        def get_weekly_results(week, league_id):
+            url = f'https://api.sleeper.app/v1/league/{league_id}/matchups/{week}'
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f'Failed to fetch matchup data for week {week}. Status: {response.status_code}')
+                return []
 
         def get_low_scorers(weekly_results):
             low_scorers = []
             for team in weekly_results:
-                team_name = team.get('team_name', 'Unknown Team')
+                team_name = team.get('team_name', f'Team {team.get(\"roster_id\", \"Unknown\")}')
                 starters = team.get('starters', [])
                 starter_points = team.get('starters_points', [])
                 low_scoring = [(s, p) for s, p in zip(starters, starter_points) if p <= 0]
@@ -49,6 +59,9 @@ jobs:
         with open(filename, 'r') as f:
             data = json.load(f)
 
+        # Define league_id (replace with your actual league ID)
+        league_id = '1117180538298658816'
+
         # Create a readable report
         report = 'Weekly Ice Report\n\n'
         for week_data in data:
@@ -57,7 +70,7 @@ jobs:
             report += f'  Lowest scoring team: {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
             report += '  Zeros or less from your starters:\n'
             
-            weekly_results = get_weekly_results(week, league_id)  # You need to implement this function
+            weekly_results = get_weekly_results(week, league_id)
             low_scorers = get_low_scorers(weekly_results)
             
             if low_scorers:
