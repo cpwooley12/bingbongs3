@@ -45,6 +45,14 @@ jobs:
                     return {roster['roster_id']: next((user['display_name'] for user in users if user['user_id'] == roster['owner_id']), f\"Team {roster['roster_id']}\") for roster in rosters}
             return {}
 
+        def get_player_names():
+            url = 'https://api.sleeper.app/v1/players/nfl'
+            response = requests.get(url)
+            if response.status_code == 200:
+                players = response.json()
+                return {player_id: player['full_name'] for player_id, player in players.items() if 'full_name' in player}
+            return {}
+
         def get_weekly_results(week, league_id, team_names):
             url = f'https://api.sleeper.app/v1/league/{league_id}/matchups/{week}'
             response = requests.get(url)
@@ -57,13 +65,13 @@ jobs:
                 print(f'Failed to fetch matchup data for week {week}. Status: {response.status_code}')
                 return []
 
-        def get_low_scorers(weekly_results):
+        def get_low_scorers(weekly_results, player_names):
             low_scorers = []
             for team in weekly_results:
                 team_name = team.get('team_name', f\"Team {team.get('roster_id', 'Unknown')}\")
                 starters = team.get('starters', [])
                 starter_points = team.get('starters_points', [])
-                low_scoring = [(s, p) for s, p in zip(starters, starter_points) if p <= 0]
+                low_scoring = [(player_names.get(s, s), p) for s, p in zip(starters, starter_points) if p <= 0]
                 if low_scoring:
                     low_scorers.append({'team_name': team_name, 'low_scoring': low_scoring})
             return low_scorers
@@ -77,28 +85,39 @@ jobs:
         # Define league_id (replace with your actual league ID)
         league_id = '1117180538298658816'
 
-        # Get team names
+        # Get team names and player names
         team_names = get_team_names(league_id)
+        player_names = get_player_names()
+
+        # Separate current week and previous weeks
+        current_week = max(week_data['week'] for week_data in data)
+        current_week_data = next(week_data for week_data in data if week_data['week'] == current_week)
+        previous_weeks_data = [week_data for week_data in data if week_data['week'] < current_week]
 
         # Create a readable report
         report = 'Weekly Ice Report\n\n'
-        for week_data in data:
-            week = week_data['week']
-            report += f'Week {week}:\n'
-            report += f'  Lowest scoring team: {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
-            report += '  Zeros or less from your starters:\n'
-            
-            weekly_results = get_weekly_results(week, league_id, team_names)
-            low_scorers = get_low_scorers(weekly_results)
-            
-            if low_scorers:
-                for team in low_scorers:
-                    report += f'    - {team[\"team_name\"]}:\n'
-                    for starter, points in team['low_scoring']:
-                        report += f'      * {starter}: {points} points\n'
-            else:
-                report += '    No starters with zero or negative points this week.\n'
-            report += '\n'
+
+        # Current Week Report
+        report += f'Current Week (Week {current_week}):\n'
+        report += f'  Lowest scoring team: {current_week_data[\"team\"]} with {current_week_data[\"score\"]} points\n'
+        report += '  Players scoring zero or less:\n'
+
+        weekly_results = get_weekly_results(current_week, league_id, team_names)
+        low_scorers = get_low_scorers(weekly_results, player_names)
+
+        if low_scorers:
+            for team in low_scorers:
+                report += f'    - {team[\"team_name\"]}:\n'
+                for starter, points in team['low_scoring']:
+                    report += f'      * {starter}: {points} points\n'
+        else:
+            report += '    No players scored zero or less this week.\n'
+        report += '\n'
+
+        # Previous Weeks Summary
+        report += 'Previous Weeks Summary:\n'
+        for week_data in previous_weeks_data:
+            report += f'  Week {week_data[\"week\"]}: Lowest scoring team was {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
 
         # Write the report to a file
         with open('weekly_report.txt', 'w') as f:
