@@ -117,7 +117,22 @@ jobs:
         # Previous Weeks Summary
         report += 'Previous Weeks Summary:\n'
         for week_data in previous_weeks_data:
-            report += f'  Week {week_data[\"week\"]}: Lowest scoring team was {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
+            week = week_data['week']
+            report += f'  Week {week}:\n'
+            report += f'    Lowest scoring team: {week_data[\"team\"]} with {week_data[\"score\"]} points\n'
+            report += '    Players scoring zero or less:\n'
+            
+            weekly_results = get_weekly_results(week, league_id, team_names)
+            low_scorers = get_low_scorers(weekly_results, player_names)
+            
+            if low_scorers:
+                for team in low_scorers:
+                    report += f'      - {team[\"team_name\"]}:\n'
+                    for starter, points in team['low_scoring']:
+                        report += f'        * {starter}: {points} points\n'
+            else:
+                report += '      No players scored zero or less this week.\n'
+            report += '\n'
 
         # Write the report to a file
         with open('weekly_report.txt', 'w') as f:
